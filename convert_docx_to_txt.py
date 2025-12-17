@@ -6,6 +6,7 @@
 
 import os
 import re
+import sys
 import base64
 import zipfile
 import xml.etree.ElementTree as ET
@@ -289,12 +290,40 @@ def convert_docx_to_txt(docx_path: str, output_path: str = None) -> str:
 
 def main():
     """Основная функция."""
-    # Находим все DOCX файлы в текущей директории
-    current_dir = Path('.')
-    docx_files = list(current_dir.glob('*.docx'))
+    # Обрабатываем аргументы командной строки
+    if len(sys.argv) > 1:
+        target_path = Path(sys.argv[1])
+    else:
+        # Если аргументов нет, используем текущую директорию
+        target_path = Path('.')
+    
+    # Определяем, что передано: файл или папка
+    if not target_path.exists():
+        print(f"ОШИБКА: Путь '{target_path}' не существует!")
+        return
+    
+    # Собираем список файлов для обработки
+    docx_files = []
+    
+    if target_path.is_file():
+        # Если передан файл, обрабатываем только его
+        if target_path.suffix.lower() == '.docx':
+            docx_files = [target_path]
+        else:
+            print(f"ОШИБКА: '{target_path}' не является DOCX файлом!")
+            return
+    elif target_path.is_dir():
+        # Если передана папка, находим все DOCX файлы в ней
+        docx_files = list(target_path.glob('*.docx'))
+    else:
+        print(f"ОШИБКА: '{target_path}' не является файлом или папкой!")
+        return
     
     if not docx_files:
-        print("DOCX файлы не найдены в текущей директории.")
+        if target_path.is_file():
+            print(f"Файл '{target_path}' не найден или не является DOCX файлом.")
+        else:
+            print(f"DOCX файлы не найдены в '{target_path}'.")
         return
     
     print(f"Найдено {len(docx_files)} DOCX файлов для обработки.\n")
